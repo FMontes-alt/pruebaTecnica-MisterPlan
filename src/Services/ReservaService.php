@@ -14,7 +14,7 @@ use Throwable;
 
 /**
  * Capa de Lógica de Negocio y Dominio para la Gestión de Reservas.
- * Garantiza validaciones estrictas y operaciones transaccionales (ACID).
+ * Garantiza validaciones estrictas.
  */
 class ReservaService
 {

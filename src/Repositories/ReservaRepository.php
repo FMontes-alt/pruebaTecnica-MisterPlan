@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Repository;
+namespace App\Repositories;
 use App\Config\Database;
 use PDO;
 
@@ -112,14 +112,22 @@ class ReservaRepository
      * @param string $nuevoEstado Nuevo estado ('pendiente', 'confirmada', 'cancelada')
      * @return int Retorna 1 si se ejecutó con éxito o 0 en caso contrario
      */
-    public function update(int $id, string $nuevoEstado): int
+    public function updateEstado(int $id, string $nuevoEstado): int
     {
         $sql = "UPDATE reserva SET estado = :estado WHERE id = :id";
         $stmt = $this->db->prepare($sql);
-        return $stmt->execute([
+        return (int) $stmt->execute([
             ':estado' => $nuevoEstado,
             ':id' => $id,
         ]);
+    }
+
+    /**
+     * Alias de updateEstado para compatibilidad.
+     */
+    public function update(int $id, string $nuevoEstado): int
+    {
+        return $this->updateEstado($id, $nuevoEstado);
     }
 
     /**
