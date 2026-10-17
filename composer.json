@@ -1,0 +1,19 @@
+{
+    "name": "fcomontes/reservas",
+    "description": "Prueba técnica MisterPlan",
+    "type": "project",
+    "authors": [
+        {
+            "name": "FMontes-alt",
+            "email": "franciscomontes95@gmail.com"
+        }
+    ],
+    "require": {
+        "twig/twig": "^3.30"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
+    }
+}
