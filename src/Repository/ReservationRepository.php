@@ -13,6 +13,12 @@ class ReservationRepository
         $this->db = $db ?? Database::getConnection();
     }
 
+    /**
+     * Obtiene el listado de reservas aplicando filtros opcionales (fechas, búsqueda).
+     *
+     * @param array $filters Filtros asociativos ['fecha_desde', 'fecha_hasta', 'search']
+     * @return array Lista de reservas ordenadas de más reciente a más antigua
+     */
     public function findAll(array $filters = [])
     {
         $sql = "SELECT id, nombre_huesped, email_huesped, nombre_alojamiento, fecha_entrada, fecha_salida, estado, importe, notas, fecha_creacion
@@ -39,6 +45,12 @@ class ReservationRepository
             $params[':search'] = '%' . trim($filters['search']) . '%';
         }
 
+        // Filtro por estado ('pendiente', 'confirmada', 'cancelada')
+        if (!empty($filters['estado'])) {
+            $sql .= " AND estado = :estado";
+            $params[':estado'] = $filters['estado'];
+        }
+
         $sql .= " ORDER BY fecha_creacion DESC, id DESC";
 
         $stmt = $this->db->prepare($sql);
@@ -47,6 +59,12 @@ class ReservationRepository
         return $stmt->fetchAll();
     }
 
+    /**
+     * Busca una reserva específica por su identificador primario.
+     *
+     * @param int $id Identificador único de la reserva
+     * @return array|false Datos de la reserva o false si no existe
+     */
     public function findById(int $id): array|false
     {
         $sql = "SELECT id, nombre_huesped, email_huesped, nombre_alojamiento, fecha_entrada, fecha_salida, estado, importe, notas, fecha_creacion
@@ -59,6 +77,12 @@ class ReservationRepository
         return $stmt->fetch();
     }
 
+    /**
+     * Inserta una nueva reserva en la base de datos.
+     *
+     * @param array $data Datos validados de la reserva a registrar
+     * @return int ID autoincremental generado tras la inserción
+     */
     public function create(array $data): int
     {
         $sql = "INSERT INTO reserva 
@@ -81,6 +105,13 @@ class ReservationRepository
         return (int) $this->db->lastInsertId();
     }
 
+    /**
+     * Actualiza el estado de una reserva existente.
+     *
+     * @param int $id Identificador de la reserva
+     * @param string $nuevoEstado Nuevo estado ('pendiente', 'confirmada', 'cancelada')
+     * @return int Retorna 1 si se ejecutó con éxito o 0 en caso contrario
+     */
     public function update(int $id, string $nuevoEstado): int
     {
         $sql = "UPDATE reserva SET estado = :estado WHERE id = :id";
@@ -91,6 +122,12 @@ class ReservationRepository
         ]);
     }
 
+    /**
+     * Comprueba de manera rápida y eficiente si una reserva existe en la BD.
+     *
+     * @param int $id Identificador de la reserva
+     * @return bool True si la reserva existe, false en caso contrario
+     */
     public function exists(int $id): bool
     {
         $sql = "SELECT 1 FROM reserva WHERE id = :id LIMIT 1";
@@ -99,6 +136,11 @@ class ReservationRepository
         return (bool) $stmt->fetchColumn();
     }
 
+    /**
+     * Obtiene estadísticas agregadas globales de reservas y facturación en una sola consulta.
+     *
+     * @return array Métricas con totales de reservas agrupadas por estado e importe total facturado
+     */
     public function getStats(): array
     {
         $sql = "SELECT 
@@ -119,5 +161,27 @@ class ReservationRepository
             'canceladas' => (int) ($res['canceladas'] ?? 0),
             'total_facturado' => (float) ($res['total_facturado'] ?? 0),
         ];
+    }
+
+    /**
+     * Inicia una transacción en la base de datos.
+     */
+    public function beginTransaction(): bool
+    {
+        return $this->db->beginTransaction();
+    }
+    /**
+     * Confirma los cambios de la transacción actual.
+     */
+    public function commit(): bool
+    {
+        return $this->db->commit();
+    }
+    /**
+     * Revierte los cambios si algo falló.
+     */
+    public function rollBack(): bool
+    {
+        return $this->db->rollBack();
     }
 }
