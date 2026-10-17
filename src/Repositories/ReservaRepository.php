@@ -4,7 +4,7 @@ namespace App\Repository;
 use App\Config\Database;
 use PDO;
 
-class ReservationRepository
+class ReservaRepository
 {
     private PDO $db;
 
