@@ -12,14 +12,18 @@ use App\Repositories\EventoRepository;
 use App\Repositories\ReservaRepository;
 use DateTime;
 use PDO;
+use RuntimeException;
 use Throwable;
 
 /**
  * Capa de Lógica de Negocio y Dominio para la Gestión de Reservas.
- * Garantiza validaciones estrictas.
+ * Garantiza validaciones estrictas y operaciones transaccionales (ACID).
  */
 class ReservaService
 {
+    /** @var string[] Estados válidos del ciclo de vida de una reserva */
+    private const ESTADOS_VALIDOS = ['pendiente', 'confirmada', 'cancelada'];
+
     private PDO $db;
     private ReservaRepository $reservaRepo;
     private EventoRepository $eventoRepo;
@@ -40,7 +44,7 @@ class ReservaService
     public function listarReservas(array $filters = []): array
     {
         $sanitizedFilters = [
-            'estado' => isset($filters['estado']) && in_array($filters['estado'], ['pendiente', 'confirmada', 'cancelada'], true)
+            'estado' => isset($filters['estado']) && in_array($filters['estado'], self::ESTADOS_VALIDOS, true)
                 ? $filters['estado'] : null,
             'fecha_desde' => !empty($filters['fecha_desde']) ? $filters['fecha_desde'] : null,
             'fecha_hasta' => !empty($filters['fecha_hasta']) ? $filters['fecha_hasta'] : null,
@@ -82,7 +86,8 @@ class ReservaService
     /**
      * Registra una nueva reserva y su evento inicial de forma atómica.
      *
-     * @throws ValidationException
+     * @throws ValidationException si los datos no superan la validación
+     * @throws RuntimeException si no se puede recuperar la reserva recién creada
      */
     public function crearReserva(array $data): array
     {
@@ -105,7 +110,12 @@ class ReservaService
 
             $this->db->commit();
 
-            return $this->reservaRepo->findById($nuevoId);
+            $reserva = $this->reservaRepo->findById($nuevoId);
+            if (!$reserva) {
+                throw new RuntimeException("No se pudo recuperar la reserva recién creada (ID: #{$nuevoId}).");
+            }
+
+            return $reserva;
         } catch (Throwable $e) {
             $this->db->rollBack();
             throw $e;
@@ -115,17 +125,18 @@ class ReservaService
     /**
      * Modifica el estado de una reserva (confirmar o cancelar) y añade el evento al historial.
      *
-     * @throws NotFoundException
-     * @throws BusinessException
-     * @throws ValidationException
+     * @throws ValidationException si el estado proporcionado no es válido
+     * @throws NotFoundException si la reserva no existe
+     * @throws BusinessException si se vulnera una regla del ciclo de vida de la reserva
+     * @throws RuntimeException si no se puede recuperar la reserva actualizada
      */
     public function cambiarEstado(int $id, string $nuevoEstado, ?string $motivo = null): array
     {
         $nuevoEstado = strtolower(trim($nuevoEstado));
 
-        if (!in_array($nuevoEstado, ['pendiente', 'confirmada', 'cancelada'], true)) {
+        if (!in_array($nuevoEstado, self::ESTADOS_VALIDOS, true)) {
             throw new ValidationException([
-                'estado' => "El estado '{$nuevoEstado}' no es válido. Debe ser: pendiente, confirmada o cancelada."
+                'estado' => "El estado '{$nuevoEstado}' no es válido. Debe ser: " . implode(', ', self::ESTADOS_VALIDOS) . "."
             ]);
         }
 
@@ -147,8 +158,8 @@ class ReservaService
 
         $tipoEvento = match ($nuevoEstado) {
             'confirmada' => 'CONFIRMACION',
-            'cancelada' => 'CANCELACION',
-            default => 'CAMBIO_ESTADO',
+            'cancelada'  => 'CANCELACION',
+            default      => 'CAMBIO_ESTADO',
         };
 
         $descripcionEvento = "Cambio de estado: '{$estadoActual}' → '{$nuevoEstado}'.";
@@ -163,7 +174,12 @@ class ReservaService
             $this->eventoRepo->create($id, $tipoEvento, $descripcionEvento);
             $this->db->commit();
 
-            return $this->reservaRepo->findById($id);
+            $reservaActualizada = $this->reservaRepo->findById($id);
+            if (!$reservaActualizada) {
+                throw new RuntimeException("No se pudo recuperar la reserva actualizada (ID: #{$id}).");
+            }
+
+            return $reservaActualizada;
         } catch (Throwable $e) {
             $this->db->rollBack();
             throw $e;
@@ -172,10 +188,11 @@ class ReservaService
 
     /**
      * Valida exhaustivamente los datos de una reserva en el servidor.
+     * Método privado: solo para uso interno del servicio.
      *
-     * @throws ValidationException
+     * @throws ValidationException con el listado de errores por campo
      */
-    public function validarDatos(array $data): void
+    private function validarDatos(array $data): void
     {
         $errors = [];
 
@@ -209,10 +226,10 @@ class ReservaService
 
         // 4. Fechas de entrada y salida
         $fechaEntrada = trim($data['fecha_entrada'] ?? '');
-        $fechaSalida = trim($data['fecha_salida'] ?? '');
+        $fechaSalida  = trim($data['fecha_salida'] ?? '');
 
         $dEntrada = DateTime::createFromFormat('Y-m-d', $fechaEntrada);
-        $dSalida = DateTime::createFromFormat('Y-m-d', $fechaSalida);
+        $dSalida  = DateTime::createFromFormat('Y-m-d', $fechaSalida);
 
         if (!$fechaEntrada || !$dEntrada || $dEntrada->format('Y-m-d') !== $fechaEntrada) {
             $errors['fecha_entrada'] = 'La fecha de entrada es obligatoria y debe tener formato AAAA-MM-DD.';
@@ -234,11 +251,11 @@ class ReservaService
             $errors['importe'] = 'El importe debe ser un número decimal mayor que 0.';
         }
 
-        // 6. Estado (si se proporciona)
+        // 6. Estado (si se proporciona explícitamente)
         if (!empty($data['estado'])) {
             $estado = strtolower(trim($data['estado']));
-            if (!in_array($estado, ['pendiente', 'confirmada', 'cancelada'], true)) {
-                $errors['estado'] = "El estado debe ser 'pendiente', 'confirmada' o 'cancelada'.";
+            if (!in_array($estado, self::ESTADOS_VALIDOS, true)) {
+                $errors['estado'] = "El estado debe ser: " . implode(', ', self::ESTADOS_VALIDOS) . ".";
             }
         }
 
