@@ -1,0 +1,447 @@
+{% extends "base.html.twig" %}
+
+{% block title %}Panel de Control de Reservas — {{ app_name }}{% endblock %}
+
+{% block content %}
+<!-- Cabecera de la sección con título y acción primaria -->
+<section class="page-intro">
+    <div class="intro-text">
+        <span class="eyebrow">Motor de Alojamiento Turístico</span>
+        <h1 class="page-title">Gestión de Reservas</h1>
+        <p class="page-subtitle">Monitorea la disponibilidad, audita cambios de estado y gestiona estancias en tiempo real.</p>
+    </div>
+    <div class="intro-actions">
+        <button id="btn-abrir-modal" class="btn btn-primary btn-lg shadow-glow" type="button">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            <span>Nueva Reserva</span>
+        </button>
+    </div>
+</section>
+
+<!-- Fila de Tarjetas KPI / Métricas Clave -->
+<section class="stats-grid" aria-label="Métricas generales">
+    <div class="stat-card stat-total">
+        <div class="stat-icon-wrapper">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+        </div>
+        <div class="stat-info">
+            <span class="stat-label">Total Reservas</span>
+            <span class="stat-value" id="kpi-total">{{ stats.total|default(reservas|length) }}</span>
+        </div>
+    </div>
+
+    <div class="stat-card stat-confirmed">
+        <div class="stat-icon-wrapper">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+        </div>
+        <div class="stat-info">
+            <span class="stat-label">Confirmadas</span>
+            <div class="stat-number-row">
+                <span class="stat-value" id="kpi-confirmadas">{{ stats.confirmadas|default(0) }}</span>
+                {% if stats.total_facturado is defined and stats.total_facturado > 0 %}
+                    <span class="stat-subtext" id="kpi-facturado">{{ stats.total_facturado|number_format(2, ',', '.') }} €</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="stat-card stat-pending">
+        <div class="stat-icon-wrapper">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+        </div>
+        <div class="stat-info">
+            <span class="stat-label">Pendientes</span>
+            <span class="stat-value" id="kpi-pendientes">{{ stats.pendientes|default(0) }}</span>
+        </div>
+    </div>
+
+    <div class="stat-card stat-cancelled">
+        <div class="stat-icon-wrapper">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="15" y1="9" x2="9" y2="15"></line>
+                <line x1="9" y1="9" x2="15" y2="15"></line>
+            </svg>
+        </div>
+        <div class="stat-info">
+            <span class="stat-label">Canceladas</span>
+            <span class="stat-value" id="kpi-canceladas">{{ stats.canceladas|default(0) }}</span>
+        </div>
+    </div>
+</section>
+
+<!-- Tarjeta de Filtros Combinables Dinámicos -->
+<section class="card filter-card">
+    <div class="filter-header-tabs">
+        <span class="filter-headline">Filtrar por estado:</span>
+        <div class="quick-status-chips" role="tablist">
+            <button type="button" class="status-chip active" data-estado="" role="tab" aria-selected="true">
+                Todas
+            </button>
+            <button type="button" class="status-chip chip-confirmed" data-estado="confirmada" role="tab" aria-selected="false">
+                <span class="chip-dot"></span> Confirmadas
+            </button>
+            <button type="button" class="status-chip chip-pending" data-estado="pendiente" role="tab" aria-selected="false">
+                <span class="chip-dot"></span> Pendientes
+            </button>
+            <button type="button" class="status-chip chip-cancelled" data-estado="cancelada" role="tab" aria-selected="false">
+                <span class="chip-dot"></span> Canceladas
+            </button>
+        </div>
+    </div>
+
+    <form id="form-filtros" class="filter-form" onsubmit="return false;">
+        <input type="hidden" id="filtro-estado" name="estado" value="{{ filters.estado|default('') }}">
+
+        <div class="filter-inputs-grid">
+            <!-- Búsqueda rápida de texto -->
+            <div class="form-group flex-2">
+                <label for="filtro-search">Búsqueda rápida</label>
+                <div class="input-with-icon">
+                    <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input 
+                        type="text" 
+                        id="filtro-search" 
+                        name="search" 
+                        class="form-control with-icon" 
+                        placeholder="Nombre de huésped, email o alojamiento..."
+                        value="{{ filters.search|default('') }}"
+                        autocomplete="off"
+                    >
+                </div>
+            </div>
+
+            <!-- Rango fecha entrada -->
+            <div class="form-group">
+                <label for="filtro-fecha-desde">Entrada desde</label>
+                <input 
+                    type="date" 
+                    id="filtro-fecha-desde" 
+                    name="fecha_desde" 
+                    class="form-control"
+                    value="{{ filters.fecha_desde|default('') }}"
+                >
+            </div>
+
+            <!-- Rango fecha salida -->
+            <div class="form-group">
+                <label for="filtro-fecha-hasta">Salida hasta</label>
+                <input 
+                    type="date" 
+                    id="filtro-fecha-hasta" 
+                    name="fecha_hasta" 
+                    class="form-control"
+                    value="{{ filters.fecha_hasta|default('') }}"
+                >
+            </div>
+
+            <!-- Botón limpiar -->
+            <div class="form-group filter-btn-group">
+                <label>&nbsp;</label>
+                <button type="button" id="btn-limpiar-filtros" class="btn btn-secondary btn-block">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="1 4 1 10 7 10"></polyline>
+                        <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+                    </svg>
+                    <span>Limpiar</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="filter-footer-info">
+            <span id="filtro-contador" class="filter-counter">
+                Mostrando <strong id="contador-numero">{{ reservas|length }}</strong> reservas registradas
+            </span>
+        </div>
+    </form>
+</section>
+
+<!-- Barra indicadora de carga asíncrona -->
+<div id="loading-spinner" class="loading-bar" style="display: none;">
+    <div class="loading-progress"></div>
+</div>
+
+<!-- ========================================================== -->
+<!-- LISTADO DE RESERVAS: TABLA (DESKTOP) + TARJETAS (MOBILE)    -->
+<!-- ========================================================== -->
+<section class="card table-card">
+    <div class="table-responsive">
+        <table class="data-table" id="tabla-reservas">
+            <thead>
+                <tr>
+                    <th style="width: 70px;">ID</th>
+                    <th>Huésped</th>
+                    <th>Alojamiento</th>
+                    <th>Fechas Estancia</th>
+                    <th>Importe</th>
+                    <th>Estado</th>
+                    <th style="text-align: right; width: 180px;">Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="tbody-reservas">
+                {% for r in reservas %}
+                    <tr id="reserva-row-{{ r.id }}" data-id="{{ r.id }}" class="booking-row">
+                        <!-- ID -->
+                        <td class="id-cell">
+                            <span class="id-badge">#{{ r.id }}</span>
+                        </td>
+
+                        <!-- Huésped con avatar -->
+                        <td class="guest-cell">
+                            <div class="guest-wrapper">
+                                <div class="guest-avatar" aria-hidden="true">
+                                    {{ r.nombre_huesped|slice(0, 2)|upper }}
+                                </div>
+                                <div class="guest-details">
+                                    <span class="guest-name">{{ r.nombre_huesped }}</span>
+                                    <span class="guest-email">{{ r.email_huesped }}</span>
+                                </div>
+                            </div>
+                        </td>
+
+                        <!-- Alojamiento -->
+                        <td class="hotel-cell">
+                            <div class="hotel-wrapper">
+                                <svg class="hotel-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                    <circle cx="12" cy="10" r="3"></circle>
+                                </svg>
+                                <span class="hotel-name">{{ r.nombre_alojamiento }}</span>
+                            </div>
+                        </td>
+
+                        <!-- Fechas -->
+                        <td class="dates-cell">
+                            <div class="stay-dates">
+                                <span class="date-tag">{{ r.fecha_entrada|date('d/m/Y') }}</span>
+                                <span class="dates-sep">→</span>
+                                <span class="date-tag">{{ r.fecha_salida|date('d/m/Y') }}</span>
+                            </div>
+                        </td>
+
+                        <!-- Importe -->
+                        <td class="amount-cell">
+                            <span class="price-value">{{ r.importe|number_format(2, ',', '.') }} €</span>
+                        </td>
+
+                        <!-- Estado -->
+                        <td class="status-cell">
+                            <span class="status-pill pill-{{ r.estado }}" id="badge-estado-{{ r.id }}">
+                                <span class="pill-dot"></span>
+                                {{ r.estado|capitalize }}
+                            </span>
+                        </td>
+
+                        <!-- Acciones -->
+                        <td class="actions-cell">
+                            <div class="action-buttons-group">
+                                <a href="/reservas/{{ r.id }}" class="btn-action btn-action-view" title="Ver detalle completo e historial">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                    </svg>
+                                    <span>Detalle</span>
+                                </a>
+                                {% if r.estado != 'cancelada' %}
+                                    <button 
+                                        type="button" 
+                                        class="btn-action btn-action-cancel btn-trigger-cancel" 
+                                        data-id="{{ r.id }}" 
+                                        data-nombre="{{ r.nombre_huesped }}"
+                                        title="Cancelar reserva"
+                                    >
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                                        </svg>
+                                        <span>Cancelar</span>
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr id="row-empty-state">
+                        <td colspan="7" class="empty-state">
+                            <div class="empty-state-card">
+                                <div class="empty-icon-circle">
+                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="11" cy="11" r="8"></circle>
+                                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                    </svg>
+                                </div>
+                                <h3 class="empty-title">No se encontraron reservas</h3>
+                                <p class="empty-desc">Ninguna reserva coincide con los criterios de búsqueda actuales.</p>
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('btn-limpiar-filtros').click();">
+                                    Restablecer filtros
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<!-- ========================================================== -->
+<!-- MODAL: CREAR NUEVA RESERVA                                 -->
+<!-- ========================================================== -->
+<div id="modal-crear" class="modal-overlay" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-card">
+        <div class="modal-header">
+            <div class="modal-title-group">
+                <div class="modal-icon-badge">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="12" y1="18" x2="12" y2="12"></line>
+                        <line x1="9" y1="15" x2="15" y2="15"></line>
+                    </svg>
+                </div>
+                <div>
+                    <h2 id="modal-title" class="modal-title">Nueva Reserva de Alojamiento</h2>
+                    <p class="modal-subtitle">Introduce los datos del huésped y las fechas de estancia.</p>
+                </div>
+            </div>
+            <button type="button" class="btn-modal-close" id="btn-cerrar-modal" aria-label="Cerrar">&times;</button>
+        </div>
+
+        <form id="form-crear-reserva" novalidate>
+            <div class="modal-body">
+                <div id="modal-alert-error" class="alert alert-error" style="display: none;"></div>
+
+                <!-- Sección: Datos del Huésped -->
+                <div class="form-section-title">Datos del Huésped</div>
+                <div class="form-row">
+                    <div class="form-group flex-1">
+                        <label for="nuevo-nombre">Nombre y Apellidos <span class="required">*</span></label>
+                        <input type="text" id="nuevo-nombre" name="nombre_huesped" class="form-control" placeholder="Ej. Ana Belén García" required minlength="3">
+                        <span class="field-error" id="error-nombre_huesped"></span>
+                    </div>
+
+                    <div class="form-group flex-1">
+                        <label for="nuevo-email">Email de Contacto <span class="required">*</span></label>
+                        <input type="email" id="nuevo-email" name="email_huesped" class="form-control" placeholder="ejemplo@email.com" required>
+                        <span class="field-error" id="error-email_huesped"></span>
+                    </div>
+                </div>
+
+                <!-- Sección: Alojamiento y Estancia -->
+                <div class="form-section-title">Alojamiento y Estancia</div>
+                <div class="form-group">
+                    <label for="nuevo-alojamiento">Nombre del Alojamiento / Habitación <span class="required">*</span></label>
+                    <input type="text" id="nuevo-alojamiento" name="nombre_alojamiento" class="form-control" placeholder="Ej. Hotel Rural Los Castaños - Hab. 104" required minlength="3">
+                    <span class="field-error" id="error-nombre_alojamiento"></span>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group flex-1">
+                        <label for="nuevo-entrada">Fecha de Entrada <span class="required">*</span></label>
+                        <input type="date" id="nuevo-entrada" name="fecha_entrada" class="form-control" required>
+                        <span class="field-error" id="error-fecha_entrada"></span>
+                    </div>
+
+                    <div class="form-group flex-1">
+                        <label for="nuevo-salida">Fecha de Salida <span class="required">*</span></label>
+                        <input type="date" id="nuevo-salida" name="fecha_salida" class="form-control" required>
+                        <span class="field-error" id="error-fecha_salida"></span>
+                    </div>
+
+                    <div class="form-group" style="width: 140px;">
+                        <label for="nuevo-importe">Importe (€) <span class="required">*</span></label>
+                        <input type="number" id="nuevo-importe" name="importe" class="form-control" placeholder="0.00" step="0.01" min="1" required>
+                        <span class="field-error" id="error-importe"></span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group flex-1">
+                        <label for="nuevo-estado">Estado Inicial</label>
+                        <select id="nuevo-estado" name="estado" class="form-control">
+                            <option value="pendiente" selected>Pendiente de confirmación</option>
+                            <option value="confirmada">Confirmada (pago recibido)</option>
+                        </select>
+                        <span class="field-error" id="error-estado"></span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="nuevo-notas">Observaciones y Peticiones Especiales</label>
+                    <textarea id="nuevo-notas" name="notas" class="form-control" rows="2" placeholder="Cuna de viaje, check-in tardío, régimen de pensión..."></textarea>
+                    <span class="field-error" id="error-notas"></span>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="btn-cancelar-modal">Cancelar</button>
+                <button type="submit" class="btn btn-primary" id="btn-submit-crear">
+                    <span class="btn-text">Confirmar y Guardar Reserva</span>
+                    <span class="btn-spinner" style="display: none;">⏳ Guardando...</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ========================================================== -->
+<!-- MODAL: CONFIRMAR CANCELACIÓN                              -->
+<!-- ========================================================== -->
+<div id="modal-cancelar" class="modal-overlay" style="display: none;" role="dialog" aria-modal="true">
+    <div class="modal-card modal-sm">
+        <div class="modal-header">
+            <div class="modal-title-group">
+                <div class="modal-icon-badge badge-danger-soft">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                </div>
+                <div>
+                    <h2 class="modal-title text-danger">Cancelar Reserva</h2>
+                    <p class="modal-subtitle">Esta acción modificará el estado y quedará registrada en el historial.</p>
+                </div>
+            </div>
+            <button type="button" class="btn-modal-close" id="btn-cerrar-cancel-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p class="cancel-confirm-text">
+                ¿Estás seguro de que deseas cancelar la reserva de <strong id="cancel-modal-nombre"></strong> (<span id="cancel-modal-id"></span>)?
+            </p>
+            <div class="form-group" style="margin-top: 1rem;">
+                <label for="cancel-motivo">Motivo de la cancelación (opcional):</label>
+                <input type="text" id="cancel-motivo" class="form-control" placeholder="Petición del cliente, causa mayor, etc.">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" id="btn-abort-cancel">Volver</button>
+            <button type="button" class="btn btn-danger" id="btn-confirm-cancel">
+                <span class="btn-text">Confirmar Cancelación</span>
+                <span class="btn-spinner" style="display: none;">⏳ Procesando...</span>
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+<script src="/assets/js/app.js"></script>
+{% endblock %}

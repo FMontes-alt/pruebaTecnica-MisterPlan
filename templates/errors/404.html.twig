@@ -1,0 +1,12 @@
+{% extends "base.html.twig" %}
+
+{% block title %}Reserva no encontrada — {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="card empty-state-container" style="text-align: center; padding: 4rem 2rem;">
+    <span style="font-size: 4rem;">🔍</span>
+    <h1 style="font-size: 2rem; margin: 1rem 0 0.5rem; color: var(--color-slate-800);">Reserva no encontrada</h1>
+    <p style="color: var(--color-slate-500); margin-bottom: 2rem;">{{ message|default('La reserva que estás intentando consultar no existe o ha sido eliminada.') }}</p>
+    <a href="/" class="btn btn-primary">Volver al listado principal</a>
+</div>
+{% endblock %}
