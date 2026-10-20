@@ -1,19 +1,29 @@
 {
-    "name": "fcomontes/reservas",
-    "description": "Prueba técnica MisterPlan",
+    "name": "fcomontes/misterplan-reservas",
+    "description": "Sistema de gestión de reservas de alojamiento - Prueba Técnica MisterPlan",
     "type": "project",
+    "license": "proprietary",
     "authors": [
         {
-            "name": "FMontes-alt",
-            "email": "franciscomontes95trabajo@gmail.com"
+            "name": "Francisco Montes",
+            "role": "Developer"
         }
     ],
     "require": {
-        "twig/twig": "^3.30"
+        "php": "^8.1 || ^8.2",
+        "twig/twig": "^3.14"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10.5"
     },
     "autoload": {
         "psr-4": {
             "App\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "App\\Tests\\": "tests/"
         }
     }
 }

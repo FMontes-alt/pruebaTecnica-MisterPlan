@@ -192,7 +192,7 @@ class ReservaService
      *
      * @throws ValidationException con el listado de errores por campo
      */
-    private function validarDatos(array $data): void
+    public function validarDatos(array $data): void
     {
         $errors = [];
 
