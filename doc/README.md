@@ -25,6 +25,3 @@ Esta serie de guías ha sido elaborada para explicar en profundidad, con lenguaj
 
 6. **[06 — Seguridad y Buenas Prácticas Aplicadas](06-seguridad-y-buenas-practicas.md)**  
    Blindaje contra inyección SQL con sentencias preparadas, protección frente a XSS, aislamiento del Document Root `/public` y control de errores.
-
-7. **[07 — Guía para Defender la Prueba en la Entrevista](07-guia-para-la-entrevista.md)**  
-   Preguntas técnicas frecuentes que te harán los evaluadores de MisterPlan y cómo responder a cada una de forma brillante y con criterio.

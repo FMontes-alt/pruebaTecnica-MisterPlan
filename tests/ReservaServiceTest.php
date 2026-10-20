@@ -16,8 +16,11 @@ class ReservaServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        // Instancia para pruebas de lógica y validación pura
-        $this->service = new ReservaService();
+        // Instancia con mocks para pruebas unitarias aisladas (sin dependencia de MySQL activo)
+        $pdoMock = $this->createMock(\PDO::class);
+        $reservaRepoMock = $this->createMock(ReservaRepository::class);
+        $eventoRepoMock = $this->createMock(EventoRepository::class);
+        $this->service = new ReservaService($reservaRepoMock, $eventoRepoMock, $pdoMock);
     }
 
     /**

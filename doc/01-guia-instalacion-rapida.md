@@ -32,7 +32,7 @@ Para ejecutar este proyecto en tu ordenador necesitas:
 ### Paso 1: Abrir la carpeta del proyecto
 Abre tu terminal en la carpeta raíz del proyecto:
 ```bash
-cd c:\Users\Fran\Desktop\Prueba-Tecnica-Fco-Montes
+cd pruebaTecnica-MisterPlan
 ```
 
 ---

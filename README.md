@@ -19,6 +19,18 @@ La aplicación cuenta con:
 
 ---
 
+## 📚 Documentación Técnica Detallada (`/doc`)
+
+Para un análisis exhaustivo y didáctico de cada parte del sistema, dispones de 6 guías dedicadas:
+1. **[01 — Guía de Instalación Rápida](doc/01-guia-instalacion-rapida.md)**: Puesta en marcha paso a paso en menos de 5 minutos.
+2. **[02 — Arquitectura y Patrones](doc/02-arquitectura-y-patrones.md)**: Flujo de peticiones, capas y patrones (MVC, Repository, Service Layer).
+3. **[03 — Base de Datos y Modelo](doc/03-base-de-datos-y-modelo.md)**: Tablas, claves foráneas, índices de rendimiento y datos de prueba.
+4. **[04 — Lógica de Negocio y Reglas](doc/04-logica-de-negocio-y-reglas.md)**: Máquina de estados, validaciones en servidor y transacciones ACID.
+5. **[05 — Vistas Twig y Frontend](doc/05-vistas-twig-y-frontend.md)**: Herencia de plantillas, auto-escaping y JS Vanilla asíncrono con debounce.
+6. **[06 — Seguridad y Buenas Prácticas](doc/06-seguridad-y-buenas-practicas.md)**: Blindaje SQL, prevención de XSS, aislamiento de Document Root y manejo de errores.
+
+---
+
 ## 🚀 Puesta en Marcha en Local
 
 ### Requisitos previos
@@ -31,7 +43,7 @@ La aplicación cuenta con:
 ### Paso 1: Clonar el repositorio
 ```bash
 git clone <url-del-repositorio>
-cd Prueba-Tecnica-Fco-Montes
+cd pruebaTecnica-MisterPlan
 ```
 
 ### Paso 2: Instalar dependencias

@@ -7,7 +7,7 @@ Si nunca has visto un proyecto PHP estructurado sin framework, esta guía te exp
 ## 🏗️ La Estructura de Carpetas
 
 ```text
-Prueba-Tecnica-Fco-Montes/
+pruebaTecnica-MisterPlan/
 │
 ├── public/                     <- LA PUERTA DE ENTRADA (Única carpeta accesible desde la web)
 │   ├── index.php               <- "El Conserje" (Front Controller): recibe todas las visitas
