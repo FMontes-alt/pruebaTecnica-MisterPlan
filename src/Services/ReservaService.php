@@ -188,7 +188,6 @@ class ReservaService
 
     /**
      * Valida exhaustivamente los datos de una reserva en el servidor.
-     * Método privado: solo para uso interno del servicio.
      *
      * @throws ValidationException con el listado de errores por campo
      */
