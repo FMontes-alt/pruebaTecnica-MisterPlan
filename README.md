@@ -2,7 +2,8 @@
 
 > **Prueba Técnica para Desarrollador/a Junior PHP**  
 > **Candidato:** Francisco Montes  
-> **Tecnologías:** PHP 8.2 (Nativo, sin framework) &bull; Twig 3.x &bull; MySQL / MariaDB (PDO) &bull; Vanilla JavaScript &bull; CSS3 &bull; PHPUnit 10.x
+> **Tecnologías:** PHP 8.2 (Nativo, sin framework) &bull; Twig 3.x &bull; MySQL / MariaDB (PDO) &bull; Vanilla JavaScript &bull; CSS3 &bull; PHPUnit 10.x  
+> **Demo Online (Producción):** 🚀 [https://fmontes-reservas.infinityfreeapp.com/](https://fmontes-reservas.infinityfreeapp.com/)
 
 ---
 
@@ -213,5 +214,5 @@ El proyecto está preparado para desplegarse fácilmente en cualquier hosting PH
    - `DB_NAME`: Nombre de la base de datos.
    - `DB_USER`: Usuario con permisos.
    - `DB_PASS`: Contraseña de la base de datos.
-2. **Document Root:** Configurar el VirtualHost de Apache/Nginx apuntando a la carpeta `/public`.
-3. **URL del Deploy:** `[Añadir aquí la URL del hosting gratuito elegido una vez subido a tu repositorio]`
+2. **Document Root:** Configurado mediante `.htaccess` para servir directamente desde la carpeta `/public`.
+3. **URL del Deploy (Producción):** 👉 **[https://fmontes-reservas.infinityfreeapp.com/](https://fmontes-reservas.infinityfreeapp.com/)**
