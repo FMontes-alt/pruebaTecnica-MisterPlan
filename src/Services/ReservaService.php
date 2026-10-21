@@ -188,11 +188,10 @@ class ReservaService
 
     /**
      * Valida exhaustivamente los datos de una reserva en el servidor.
-     * Método privado: solo para uso interno del servicio.
      *
      * @throws ValidationException con el listado de errores por campo
      */
-    private function validarDatos(array $data): void
+    public function validarDatos(array $data): void
     {
         $errors = [];
 

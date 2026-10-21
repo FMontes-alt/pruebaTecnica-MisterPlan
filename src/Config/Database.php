@@ -27,6 +27,23 @@ class Database
     public static function getConnection(): PDO
     {
         if (self::$pdo === null) {
+            // Cargar archivo .env si existe en la raíz
+            $envPath = dirname(__DIR__, 2) . '/.env';
+            if (file_exists($envPath)) {
+                $lines = file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+                foreach ($lines as $line) {
+                    $trimmed = trim($line);
+                    if ($trimmed === '' || str_starts_with($trimmed, '#') || !str_contains($trimmed, '=')) {
+                        continue;
+                    }
+                    [$key, $val] = explode('=', $trimmed, 2);
+                    $key = trim($key);
+                    $val = trim($val, " \t\n\r\0\x0B\"'");
+                    $_ENV[$key] = $val;
+                    putenv("$key=$val");
+                }
+            }
+
             // Cargar variables de entorno
             $host = $_ENV['DB_HOST'] ?? getenv('DB_HOST') ?: '127.0.0.1';
             $port = $_ENV['DB_PORT'] ?? getenv('DB_PORT') ?: '3306';
