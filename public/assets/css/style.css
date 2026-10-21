@@ -1017,6 +1017,15 @@ body {
     justify-content: space-between;
     padding: 1.5rem 1.75rem;
     border-bottom: 1px solid var(--border-subtle);
+    flex-shrink: 0;
+}
+
+.modal-card form {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
 }
 
 .modal-title-group {
@@ -1076,6 +1085,8 @@ body {
     display: flex;
     flex-direction: column;
     gap: 1.1rem;
+    flex: 1;
+    min-height: 0;
 }
 
 .form-section-title {
@@ -1121,6 +1132,7 @@ body {
     align-items: center;
     justify-content: flex-end;
     gap: 0.75rem;
+    flex-shrink: 0;
 }
 
 /* ==========================================================
